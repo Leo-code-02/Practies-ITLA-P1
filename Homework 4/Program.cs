@@ -1,4 +1,10 @@
-﻿namespace Progr1_tarea_4
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+
+
+namespace Progr1_tarea_4
     //Leandro Leguisamo Garcia 2024-2580
 {
     internal class Program
@@ -20,7 +26,7 @@
         {
             private List<Contact> contacts = new List<Contact>();
 
-            public void AddContact()
+            public bool AddContact()
             {
                 Console.WriteLine("\n=== ADD NEW CONTACT ===");
 
@@ -57,6 +63,8 @@
 
                 contacts.Add(newContact);
                 Console.WriteLine("\nContact added successfully!\n");
+
+                return true;
             }
 
             public void ListContacts()
@@ -112,20 +120,20 @@
                 }
             }
 
-            public void EditContact()
+            public bool EditContact()
             {
                 Console.Write("Enter the ID of the contact to edit: ");
                 if (!int.TryParse(Console.ReadLine(), out int id))
                 {
                     Console.WriteLine("Invalid ID format.\n");
-                    return;
+                    return false;
                 }
 
                 var contact = contacts.FirstOrDefault(c => c.Id == id);
                 if (contact == null)
                 {
                     Console.WriteLine("Contact not found.\n");
-                    return;
+                    return false;
                 }
 
                 Console.WriteLine("Leave a field empty to keep the current value.");
@@ -160,22 +168,24 @@
                 else if (favInput == "no" || favInput == "n") contact.IsFavorite = false;
 
                 Console.WriteLine("Contact updated successfully!\n");
+
+                return true;
             }
 
-            public void DeleteContact()
+            public bool DeleteContact()
             {
                 Console.Write("Enter the ID of the contact to delete: ");
                 if (!int.TryParse(Console.ReadLine(), out int id))
                 {
                     Console.WriteLine("Invalid ID format.\n");
-                    return;
+                    return false;
                 }
 
                 var contact = contacts.FirstOrDefault(c => c.Id == id);
                 if (contact == null)
                 {
                     Console.WriteLine("Contact not found.\n");
-                    return;
+                    return false;
                 }
 
                 Console.WriteLine($"Are you sure you want to delete {contact.Name} {contact.LastName}? (yes/no): ");
@@ -185,21 +195,64 @@
                 {
                     contacts.Remove(contact);
                     Console.WriteLine("Contact deleted successfully!\n");
+                    return true;
                 }
                 else
                 {
                     Console.WriteLine("Deletion cancelled.\n");
+                    return false;
                 }
-
             }
 
+            public void LoadContactsFromFile(string filePath)
+            {
+                if (!File.Exists(filePath)) return;
+
+                string[] lines = File.ReadAllLines(filePath);
+
+                foreach (var line in lines)
+                {
+                    string[] parts = line.Split('|');
+                    if (parts.Length == 8)
+                    {
+                        Contact contact = new Contact
+                        {
+                            Id = int.Parse(parts[0]),
+                            Name = parts[1],
+                            LastName = parts[2],
+                            Address = parts[3],
+                            Phone = parts[4],
+                            Email = parts[5],
+                            Age = int.Parse(parts[6]),
+                            IsFavorite = bool.Parse(parts[7])
+                        };
+
+                        contacts.Add(contact);
+                    }
+                }
+            }
+
+            public void SaveContactsToFile(string filePath)
+            {
+                using (StreamWriter writer = new StreamWriter(filePath))
+                {
+                    foreach (var contact in contacts)
+                    {
+                        string line = $"{contact.Id}|{contact.Name}|{contact.LastName}|{contact.Address}|{contact.Phone}|{contact.Email}|{contact.Age}|{contact.IsFavorite}";
+                        writer.WriteLine(line);
+                    }
+                }
+            }
         }
 
 
         static void Main(string[] args)
         {
-
+            string filePath = "contacts.txt";
             ContactManager manager = new ContactManager();
+            bool wasModifile = false;
+
+            manager.LoadContactsFromFile(filePath);
 
 
             while (true) {
@@ -221,7 +274,7 @@
                 switch (option)
                 {
                     case 1:
-                        { manager.AddContact(); }
+                        { if (manager.AddContact()) wasModifile = true; }
                         break;
                     case 2:
                         { manager.ListContacts(); }
@@ -230,21 +283,27 @@
                         { manager.SearchContact(); }
                         break;
                     case 4:
-                        { manager.EditContact(); }
+                        { if (manager.EditContact()) wasModifile = true; }
                         break;
                     case 5:
-                        { manager.DeleteContact(); }
+                        { if (manager.DeleteContact()) wasModifile = true; }
                         break;
                     case 6:
-                        Console.WriteLine("Thanks for using the Contact List. Goodbye!");
+                        if (wasModifile)
+                        {
+                            manager.SaveContactsToFile(filePath);
+                            Console.WriteLine("Contacts saved. Thanks for using the Contact List. Goodbye!");
+                        }
+                        else
+                        {
+                            Console.WriteLine("No changes made to contacts. Goodbye!");  
+                        }
                         return;
                     default:
                         Console.WriteLine("Invalid option, please enter a number between 1 and 6.\n");
                         break;
                 }
-
             }
-
         }
     }
 }
