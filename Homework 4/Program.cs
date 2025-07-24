@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
+//Leandro Leguisamo Garcia 2024-2580
+// This code is part of a contact management application that allows users to add, list, search, edit, and delete contacts.
+// The contacts are stored in a list and can be saved to or loaded from a text file.    
 
 namespace Progr1_tarea_4
-    //Leandro Leguisamo Garcia 2024-2580
+    
 {
     internal class Program
     {
